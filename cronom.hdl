@@ -1,0 +1,199 @@
+--------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_arith.ALL;
+
+entity cron is
+
+Port (     clock :         in  STD_LOGIC;
+           reset :         in  STD_LOGIC;
+           
+           carga :         in  STD_LOGIC;
+           para_continua : in  STD_LOGIC;
+           novo_quarto :   in  STD_LOGIC;
+          
+           c_quarto :      in  STD_LOGIC_VECTOR (1 downto 0);
+           c_minutos :     in  STD_LOGIC_VECTOR (3 downto 0);
+           c_segundos :    in  STD_LOGIC_VECTOR (5 downto 0);
+                          
+           centesimos :    out  STD_LOGIC_VECTOR (6 downto 0);
+           segundos :      out  STD_LOGIC_VECTOR (5 downto 0);
+           minutos :       out  STD_LOGIC_VECTOR (3 downto 0);
+           quarto :        out  STD_LOGIC_VECTOR (1 downto 0)
+         );
+
+end cron;
+
+architecture Behavioral of cron is
+
+signal cont_ciclos : integer range 0 to 499999;
+constant contagem_ciclos : integer := 49;
+
+signal passou1cent: std_logic;
+signal passou1seg: std_logic;
+signal passou1min: std_logic;
+signal passou1quar: std_logic;
+signal acabou_jogo: std_logic;
+
+signal cont_cent: integer := 0;
+signal cont_seg: integer := 0;
+signal cont_min: integer := 0;
+signal cont_quar: integer := 0;
+
+type estado is (REP, CONTA, PARADO, LOAD);
+signal EA, PE : estado;
+
+begin
+centesimos <= conv_std_logic_vector (cont_cent, 7);
+segundos <= conv_std_logic_vector (cont_seg, 6);
+minutos <= conv_std_logic_vector (cont_min, 4);
+quarto <= conv_std_logic_vector (cont_quar, 2);
+
+ct_cycles:
+	 process (clock)
+      begin
+			if clock'event and clock='1' then		
+				if reset = '1' then
+					cont_ciclos <= 0;
+				elsif	cont_ciclos /= contagem_ciclos then
+						cont_ciclos <= cont_ciclos + 1;
+				else
+						cont_ciclos <=0;
+				end if;
+			end if;
+		end process;
+			
+		passou1cent <= '1' when cont_ciclos = contagem_ciclos else '0';
+		
+		-- conta_cent <= conta_cent + 1 when passou1cent = '1';
+
+ct_cents:
+	 process (clock)
+      begin
+			if clock'event and clock='1' then		
+				if reset = '1' then
+					cont_cent <= 0;
+				elsif	passou1cent='1' then
+					if cont_cent /= 0 then
+						cont_cent <= cont_cent - 1;
+					else
+						cont_cent <=99;
+					end if;
+				end if;
+			end if;
+		end process;
+			
+		passou1seg <= '1' when (cont_cent = 0 and passou1cent='1') else '0';
+-------------------------------		
+
+ct_seg:
+	 process (clock)
+      begin
+			if clock'event and clock='1' then		
+				if reset = '1' then
+					cont_seg <= 0;
+				elsif	passou1seg='1' then
+					if cont_seg /= 0 then
+						cont_seg <= cont_seg - 1;
+					else
+						cont_seg <=59;
+					end if;
+				end if;
+			end if;
+		end process;
+			
+		passou1min <= '1' when (cont_cent = 0 and passou1cent='1' and cont_seg = 0 and passou1seg='1') else '0';
+-------------------------------	
+
+ct_min:
+	 process (clock)
+      begin
+			if clock'event and clock='1' then		
+				if reset = '1' then
+					cont_min <= 15;
+				elsif	passou1min='1' then
+					if cont_min /= 0 then
+						cont_min <= cont_min - 1;
+					else
+						cont_min <=14;
+					end if;
+				end if;
+			end if;
+		end process;
+			
+		passou1quar <= '1' when ( cont_cent = 0 and passou1cent='1'
+										  and cont_seg = 0 and passou1seg='1'
+										  and cont_min = 0 and passou1min='1' ) else '0';
+-------------------------------		
+
+ct_quar:
+	 process (clock)
+      begin
+			if clock'event and clock='1' then		
+				if reset = '1' then
+					cont_quar <= 1;
+				elsif	passou1quar='1' then
+					if cont_quar /= 0 then
+						cont_quar <= cont_quar + 1;
+					else
+						cont_quar <= 1;
+					end if;
+				end if;
+			end if;
+		end process;
+			
+		acabou_jogo <= '1' when ( cont_cent = 0 and passou1cent='1'
+										  and cont_seg = 0 and passou1seg='1'
+										  and cont_min = 0 and passou1min='1' 
+										  and cont_quar = 0 and passou1quar='1') else '0';
+-------------------------------
+--Maquina de estados		
+-------------------------------
+
+-- REP = 00
+-- CONTA = 01
+-- PARADO = 10
+-- LOAD = 11
+
+
+maquina:
+	 process (clock)
+      begin
+			if clock'event and clock='1' then		
+				if reset = '1' then
+					EA <= REP;			
+				else	
+					EA <= PE;
+				end if;
+			end if;
+		end process;
+-------------------------------------------
+process (carga,para_continua,passou1quar,cont_quar, novo_quarto,EA)
+	begin
+		case EA is
+			WHEN REP =>				
+				if(para_continua='1' and cont_quar < 4) then
+					PE <= CONTA;
+				elsif(carga='1')then
+					PE <= LOAD;
+				end if;
+				
+			WHEN CONTA =>
+				if (para_continua ='1' or passou1quar='1') then
+					PE <= PARADO;
+				end if;
+				
+			WHEN PARADO =>
+				if (novo_quarto = '1' and passou1quar = '1' ) then
+					PE <= REP;
+				elsif (carga='1') then
+					PE <= LOAD;
+				end if;
+				
+			WHEN LOAD =>
+				if (para_continua='1') then
+					PE <= CONTA;
+				end if;
+		end case;
+	end process;
+end Behavioral;
