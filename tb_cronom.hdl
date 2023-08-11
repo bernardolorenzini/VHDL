@@ -1,0 +1,94 @@
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+ 
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--USE ieee.numeric_std.ALL;
+ 
+ENTITY tb_cron IS
+END tb_cron;
+ 
+ARCHITECTURE behavior OF tb_cron IS 
+ 
+    -- Component Declaration for the Unit Under Test (UUT)
+ 
+    COMPONENT cron
+    PORT(
+         clock : IN  std_logic;
+         reset : IN  std_logic;
+         carga : IN  std_logic;
+         para_continua : IN  std_logic;
+         novo_quarto : IN  std_logic;
+         c_quarto : IN  std_logic_vector(1 downto 0);
+         c_minutos : IN  std_logic_vector(3 downto 0);
+         c_segundos : IN  std_logic_vector(5 downto 0);
+         centesimos : OUT  std_logic_vector(6 downto 0);
+         segundos : OUT  std_logic_vector(5 downto 0);
+         minutos : OUT  std_logic_vector(3 downto 0);
+         quarto : OUT  std_logic_vector(1 downto 0)
+        );
+    END COMPONENT;
+    
+
+   --Inputs
+   signal clock : std_logic := '0';
+   signal reset : std_logic := '0';
+   signal carga : std_logic := '0';
+   signal para_continua : std_logic := '0';
+   signal novo_quarto : std_logic := '0';
+   signal c_quarto : std_logic_vector(1 downto 0) := (others => '0');
+   signal c_minutos : std_logic_vector(3 downto 0) := (others => '0');
+   signal c_segundos : std_logic_vector(5 downto 0) := (others => '0');
+
+ 	--Outputs
+   signal centesimos : std_logic_vector(6 downto 0);
+   signal segundos : std_logic_vector(5 downto 0);
+   signal minutos : std_logic_vector(3 downto 0);
+   signal quarto : std_logic_vector(1 downto 0);
+
+   -- Clock period definitions
+   constant clock_period : time := 20 ns;
+ 
+BEGIN
+ 
+	-- Instantiate the Unit Under Test (UUT)
+   uut: cron PORT MAP (
+          clock => clock,
+          reset => reset,
+          carga => carga,
+          para_continua => para_continua,
+          novo_quarto => novo_quarto,
+          c_quarto => c_quarto,
+          c_minutos => c_minutos,
+          c_segundos => c_segundos,
+          centesimos => centesimos,
+          segundos => segundos,
+          minutos => minutos,
+          quarto => quarto
+        );
+
+   -- Clock process definitions
+   clock_process :process
+   begin
+		clock <= '0';
+		wait for clock_period/2;
+		clock <= '1';
+		wait for clock_period/2;
+   end process;
+	
+	reset <= '1', '0' after 15 ns;
+
+   -- Stimulus process
+   stim_proc: process
+   begin		
+      -- hold reset state for 100 ns.
+      wait for 100 ns;	
+
+      wait for clock_period*10;
+
+      -- insert stimulus here 
+
+      wait;
+   end process;
+
+END;
