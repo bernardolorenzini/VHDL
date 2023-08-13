@@ -1,0 +1,7 @@
+v 4
+file . "updowncounter.vhd" "ac14a2f8ff230b7a832ab3b59df14b8a7f40077c" "20230813033305.158":
+  entity updowncounter at 1( 0) + 0 on 13;
+  architecture behavioral of updowncounter at 15( 316) + 0 on 14;
+file . "updowncounter_tb.vhd" "b2366474ad48e754b9be68de8e21bcad691c066b" "20230813033305.133":
+  entity updowncounter_tb at 1( 0) + 0 on 11;
+  architecture testbench of updowncounter_tb at 8( 120) + 0 on 12;
