@@ -3,7 +3,7 @@ USE ieee.std_logic_1164.ALL;
  
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
---USE ieee.numeric_std.ALL;
+--USE ieee.numeric_std.ALL; try do ut again later
  
 ENTITY tb_cron IS
 END tb_cron;
